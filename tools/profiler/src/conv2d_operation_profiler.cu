@@ -926,7 +926,8 @@ bool Conv2dOperationProfiler::verify_with_host_reference_(
       conv_desc.C.element,
       conv_desc.C.layout,
       conv_desc.tile_description.math_instruction.element_accumulator, 
-      conv_desc.element_epilogue);
+      conv_desc.element_epilogue,
+      conv_desc.epilogue_math_op);
 
 #if 0 // debug print to check which host refererence instance is selected
     std::cout << conv2d_key << "\n";
@@ -1060,7 +1061,8 @@ bool Conv2dOperationProfiler::verify_with_device_reference_(
       conv_desc.C.element,
       conv_desc.C.layout,
       conv_desc.tile_description.math_instruction.element_accumulator, 
-      conv_desc.element_epilogue);
+      conv_desc.element_epilogue,
+      conv_desc.epilogue_math_op);
 
     auto operators_it = Singleton::get().operation_table.conv2d_operations.find(conv2d_key);
 

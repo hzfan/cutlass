@@ -294,9 +294,8 @@ DeviceAllocation::DeviceAllocation(
 ):
   type_(type), batch_stride_(capacity), capacity_(capacity), pointer_(nullptr), 
   layout_(library::LayoutTypeID::kUnknown), batch_count_(1) {
-
+  
   cudaError_t result = cudaMalloc((void **)&pointer_, bytes(type, capacity));
-
   if (result != cudaSuccess) {
     type_ = library::NumericTypeID::kInvalid;
     capacity_ = 0;

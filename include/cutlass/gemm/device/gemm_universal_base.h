@@ -374,6 +374,8 @@ public:
     CUTLASS_TRACE_HOST("  grid: (" << grid << "),  block: (" << block 
       << "),  SMEM: " << smem_size << " bytes");
 
+    print_params();
+
     // Launch
     cutlass::Kernel<GemmKernel><<<grid, block, smem_size, stream>>>(params_);
 
@@ -408,6 +410,27 @@ public:
     }
 
     return status;
+  }
+
+  void print_params() const {
+    std::cout << "GemmParams: " << std::endl;
+    std::cout << "    problem_size: " << params_.problem_size.m() << ", "<< params_.problem_size.n() << "," <<  params_.problem_size.k() << std::endl;
+    std::cout << "    problem_size: " << params_.grid_tiled_shape.m() << ", "<< params_.grid_tiled_shape.n() << "," <<  params_.grid_tiled_shape.k() << std::endl;
+    // std::cout << "    alpha:      " << params_.output_op.alpha << std::endl;
+    std::cout << "    alpha_ptr:  " << params_.output_op.alpha_ptr << std::endl;
+    // std::cout << "    beta:       " << params_.output_op.beta << std::endl;
+    std::cout << "    beta_ptr:   " << params_.output_op.beta_ptr << std::endl;
+    std::cout << "    batch_count: " << params_.batch_count << std::endl;
+    std::cout << "  gemm_k_size: " << params_.gemm_k_size << std::endl;
+    std::cout << "  ptr_A: " << params_.ptr_A << std::endl;
+    std::cout << "  ptr_B: " << params_.ptr_B << std::endl;
+    std::cout << "  ptr_C: " << params_.ptr_C << std::endl;
+    std::cout << "  ptr_D: " << params_.ptr_D << std::endl;
+    std::cout << "  batch_stride_A: " << params_.batch_stride_A << std::endl;
+    std::cout << "  batch_stride_B: " << params_.batch_stride_B << std::endl;
+    std::cout << "  batch_stride_C: " << params_.batch_stride_C << std::endl;
+    std::cout << "  batch_stride_D: " << params_.batch_stride_D << std::endl;
+    std::cout << "  semaphore: " << params_.semaphore << std::endl;
   }
 };
 

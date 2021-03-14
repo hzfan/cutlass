@@ -22,17 +22,17 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  **************************************************************************************************/
-/*! 
+/*!
   \file
 
   \brief CUTLASS Library is an object-oriented approach to managing operations implemented by CUTLASS.
 
   Generally,
-    
+
     description   - compile-time constant parameters used to instantiate an operation
 
-    configuration - runtime parameters with computationally expensive initialization 
-    
+    configuration - runtime parameters with computationally expensive initialization
+
     arguments     - runtime parameters that may be passed to an initialized operation with low
                     computational overhead
 */
@@ -45,6 +45,9 @@
 #include "cutlass/arch/arch.h"
 #include "cutlass/arch/mma.h"
 #include "cutlass/layout/matrix.h"
+#include "cutlass/epilogue/thread/linear_combination.h"
+#include "cutlass/epilogue/thread/linear_combination_relu.h"
+#include "cutlass/epilogue/thread/linear_combination_gelu.h"
 
 #include "cutlass/library/library.h"
 #include "cutlass/library/arch_mappings.h"
@@ -325,6 +328,62 @@ TensorDescription make_TensorDescription(int alignment = 1) {
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////
+
+template <typename T> struct EpilogueOpMap {
+  static EpilogueKind const kId = EpilogueKind::kUnknown;
+};
+
+template <
+  typename ElementOutput_,
+  int Count,
+  typename ElementAccumulator_,
+  typename ElementCompute_,
+  cutlass::epilogue::thread::ScaleType::Kind Scale,
+  FloatRoundStyle Round
+>
+struct EpilogueOpMap<cutlass::epilogue::thread::LinearCombination<
+  ElementOutput_,
+  Count,
+  ElementAccumulator_,
+  ElementCompute_,
+  Scale,
+  Round>> {
+  static EpilogueKind const kId = EpilogueKind::kLinearCombination;
+};
+
+template <
+  typename ElementOutput_,
+  int Count,
+  typename ElementAccumulator_,
+  typename ElementCompute_,
+  cutlass::epilogue::thread::ScaleType::Kind Scale,
+  FloatRoundStyle Round
+>
+struct EpilogueOpMap<cutlass::epilogue::thread::LinearCombinationRelu<
+  ElementOutput_,
+  Count,
+  ElementAccumulator_,
+  ElementCompute_,
+  Scale,
+  Round>> {
+  static EpilogueKind const kId = EpilogueKind::kLinearCombinationRelu;
+};
+
+template <
+  typename ElementOutput_,
+  int Count,
+  typename ElementAccumulator_,
+  typename ElementCompute_,
+  FloatRoundStyle Round
+>
+struct EpilogueOpMap<cutlass::epilogue::thread::LinearCombinationGELU<
+  ElementOutput_,
+  Count,
+  ElementAccumulator_,
+  ElementCompute_,
+  Round>> {
+  static EpilogueKind const kId = EpilogueKind::kLinearCombinationGELU;
+};
 
 } // namespace library
 } // namespace cutlass

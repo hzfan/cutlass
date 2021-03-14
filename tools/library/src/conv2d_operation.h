@@ -62,6 +62,7 @@ public:
   using LayoutC = typename Operator::LayoutC;
   using ElementAccumulator = typename Operator::ElementAccumulator;
   using ElementCompute = typename Operator::EpilogueOutputOp::ElementCompute;
+  using EpilogueOutputOp = typename Operator::EpilogueOutputOp;
   static cutlass::conv::IteratorAlgorithm const kIteratorAlgorithm = Operator::kIteratorAlgorithm;
   static cutlass::conv::Operator const kConvolutionalOperator = Operator::kConvolutionalOperator;
 
@@ -121,6 +122,7 @@ public:
     description_.C = make_TensorDescription<ElementC, LayoutC>();
     description_.element_epilogue = NumericTypeMap<ElementCompute>::kId;
 
+    description_.epilogue_math_op = EpilogueOpMap<EpilogueOutputOp>::kId;
     // TODO: Add split k mode Serial and parallel to convolutions
     // description_.split_k_mode = Operator::kSplitK ? SplitKMode::kSerial : SplitKMode::kNone;
 
@@ -187,7 +189,8 @@ protected:
     operator_args.ref_C = 
     {
       nullptr, 
-      LayoutC::packed(implicit_gemm_tensor_c_extent(kConvolutionalOperator, configuration->problem_size))
+      // LayoutC::packed(implicit_gemm_tensor_c_extent(kConvolutionalOperator, configuration->problem_size))
+      LayoutC(configuration->stride_c[0], configuration->stride_c[1], configuration->stride_c[2])
     };
     
     operator_args.ref_D = 
@@ -305,8 +308,8 @@ public:
     }
 
     Operator *op = new (host_workspace) Operator;
-    //std::cout << "initialize library::Conv2dOperation" << std::endl;
-    //print_operator_args(args);
+    // std::cout << "initialize library::Conv2dOperation" << std::endl;
+    // print_operator_args(args);
     return op->initialize(args, device_workspace, stream);
 
   }
@@ -335,8 +338,8 @@ public:
     if (status != Status::kSuccess) {
       return status;
     }
-    //std::cout << "run library::Conv2dOperation" << std::endl;
-    //print_operator_args(args);
+    // std::cout << "run library::Conv2dOperation" << std::endl;
+    // print_operator_args(args);
     return op->run(stream);
   }
 

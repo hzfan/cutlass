@@ -424,11 +424,22 @@ GemmKindNames = {
 class EpilogueFunctor(enum.Enum):
   LinearCombination = enum_auto()
   LinearCombinationClamp = enum_auto()
+  LinearCombinationRelu = enum_auto()
+  LinearCombinationGELU = enum_auto()
 
 #
 EpilogueFunctorTag = {
   EpilogueFunctor.LinearCombination: 'cutlass::epilogue::thread::LinearCombination',
   EpilogueFunctor.LinearCombinationClamp: 'cutlass::epilogue::thread::LinearCombinationClamp',
+  EpilogueFunctor.LinearCombinationRelu: 'cutlass::epilogue::thread::LinearCombinationRelu',
+  EpilogueFunctor.LinearCombinationGELU: 'cutlass::epilogue::thread::LinearCombinationGELU',
+}
+
+EpilogueFunctorNames = {
+  EpilogueFunctor.LinearCombination: "",
+  EpilogueFunctor.LinearCombinationClamp: "clamp",
+  EpilogueFunctor.LinearCombinationRelu: "relu",
+  EpilogueFunctor.LinearCombinationGELU: "gelu",
 }
 
 #
@@ -525,7 +536,8 @@ class TileDescription:
     self.maximum_compute_capability = max_compute
 
   def procedural_name(self):
-    return "%dx%d_%dx%d" % (self.threadblock_shape[0], self.threadblock_shape[1], self.threadblock_shape[2], self.stages)
+    return "%dx%d_%dx%d_%dx%dx%d" % (self.threadblock_shape[0], self.threadblock_shape[1], self.threadblock_shape[2], self.stages,
+                                     self.warp_count[0], self.warp_count[1], self.warp_count[2])
 
 #
 class TensorDescription:

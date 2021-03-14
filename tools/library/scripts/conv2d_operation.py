@@ -62,8 +62,8 @@ class Conv2dOperation:
     else:
       inst_shape = ''
 
-    return "%s%s%s%s_%s" % (ShortDataTypeNames[self.accumulator_type()], \
-      inst_shape, intermediate_type, ConvKindNames[self.conv_kind], IteratorAlgorithmNames[self.iterator_algorithm])
+    return "%s%s%s%s%s_%s" % (ShortDataTypeNames[self.accumulator_type()], \
+      inst_shape, intermediate_type, ConvKindNames[self.conv_kind], EpilogueFunctorNames[self.epilogue_functor], IteratorAlgorithmNames[self.iterator_algorithm])
 
   #
   def extended_name(self):
@@ -95,12 +95,13 @@ class Conv2dOperation:
 
     opcode_class_name = OpcodeClassNames[self.tile_description.math_instruction.opcode_class]
     
-    threadblock = "%dx%d_%dx%d" % (
-      self.tile_description.threadblock_shape[0],
-      self.tile_description.threadblock_shape[1],
-      self.tile_description.threadblock_shape[2],
-      self.tile_description.stages
-    )
+    threadblock = self.tile_description.procedural_name()
+    # threadblock = "%dx%d_%dx%d" % (
+    #   self.tile_description.threadblock_shape[0],
+    #   self.tile_description.threadblock_shape[1],
+    #   self.tile_description.threadblock_shape[2],
+    #   self.tile_description.stages
+    # )
 
     if self.stride_support == StrideSupport.Unity:
       configuration_name = "cutlass_${opcode_class}_${extended_name}_${threadblock}_${layout}_unity_stride"
@@ -166,6 +167,7 @@ class EmitConv2dInstance:
     warp_shape = [int(operation.tile_description.threadblock_shape[idx] / operation.tile_description.warp_count[idx]) for idx in range(3)]
 
     epilogue_vector_length = int(min(operation.C.alignment * DataTypeSize[operation.C.element], 128) / DataTypeSize[operation.C.element])
+    # epilogue_vector_length = 2
 
     values = {
       'operation_name': operation.procedural_name(),

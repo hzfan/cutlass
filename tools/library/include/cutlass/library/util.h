@@ -143,6 +143,9 @@ char const *to_string(ConvKind type, bool pretty = false);
 template <>
 ConvKind from_string<ConvKind>(std::string const &str);
 
+/// Converts a EpilogueKind enumerant to a string
+char const *to_string(EpilogueKind type, bool pretty = false);
+
 /// Lexical cast from int64_t to string
 std::string lexical_cast(int64_t int_value);
 

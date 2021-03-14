@@ -60,6 +60,7 @@ struct GemmFunctionalKey {
   LayoutTypeID layout_B;
   ComplexTransform transform_B;
   NumericTypeID element_C;
+  EpilogueKind epilogue_math_op;
 
   //
   // Methods
@@ -77,7 +78,8 @@ struct GemmFunctionalKey {
     NumericTypeID element_B = NumericTypeID::kF16,
     LayoutTypeID layout_B = LayoutTypeID::kColumnMajor,
     ComplexTransform transform_B = ComplexTransform::kNone,
-    NumericTypeID element_C = NumericTypeID::kF16
+    NumericTypeID element_C = NumericTypeID::kF16,
+    EpilogueKind epilogue_math_op = EpilogueKind::kLinearCombination
   ):
     provider(provider),
     gemm_kind(gemm_kind),
@@ -89,7 +91,8 @@ struct GemmFunctionalKey {
     element_B(element_B),
     layout_B(layout_B),
     transform_B(transform_B),
-    element_C(element_C)
+    element_C(element_C),
+    epilogue_math_op(epilogue_math_op)
   { }
 
   inline
@@ -105,7 +108,8 @@ struct GemmFunctionalKey {
       (element_B == rhs.element_B) &&
       (layout_B == rhs.layout_B) &&
       (transform_B == rhs.transform_B) &&
-      (element_C == rhs.element_C);
+      (element_C == rhs.element_C) &&
+      (epilogue_math_op == epilogue_math_op);
   }
 
   inline
@@ -131,6 +135,7 @@ std::ostream & operator<<(std::ostream &out, cutlass::library::GemmFunctionalKey
     << "         layout_B: " << to_string(k.layout_B) << "\n"
     << "      transform_B: " << to_string(k.transform_B) << "\n"
     << "        element_C: " << to_string(k.element_C) << "\n"
+    << " epilogue_math_op: " << to_string(k.epilogue_math_op) << "\n"
     << "}";
 
   return out;
@@ -162,7 +167,8 @@ struct GemmFunctionalKeyHasher {
       rotl(hash(int(key.element_B)), 8) ^
       rotl(hash(int(key.layout_B)), 9) ^
       rotl(hash(int(key.transform_B)), 10) ^
-      rotl(hash(int(key.element_C)), 11);
+      rotl(hash(int(key.element_C)), 11) ^
+      rotl(hash(int(key.epilogue_math_op)), 12);
   }
 };
 
@@ -224,6 +230,7 @@ struct ConvFunctionalKey {
   library::LayoutTypeID layout_C;
   library::NumericTypeID element_accumulator;
   library::NumericTypeID element_compute;
+  library::EpilogueKind epilogue_math_op;
 
 
   //
@@ -241,7 +248,8 @@ struct ConvFunctionalKey {
     library::NumericTypeID element_C = library::NumericTypeID::kF16,
     library::LayoutTypeID layout_C = library::LayoutTypeID::kTensorNHWC,
     library::NumericTypeID element_accumulator = library::NumericTypeID::kF32,
-    library::NumericTypeID element_compute = library::NumericTypeID::kF32
+    library::NumericTypeID element_compute = library::NumericTypeID::kF32,
+    library::EpilogueKind epilogue_math_op = library::EpilogueKind::kLinearCombination
   ):
     provider(provider),
     conv_kind(conv_kind),
@@ -252,7 +260,8 @@ struct ConvFunctionalKey {
     element_C(element_C),
     layout_C(layout_C),
     element_accumulator(element_accumulator),
-    element_compute(element_compute)
+    element_compute(element_compute),
+    epilogue_math_op(epilogue_math_op)
   { } 
 
   inline 
@@ -267,7 +276,8 @@ struct ConvFunctionalKey {
       (element_C == rhs.element_C) &&
       (layout_C == rhs.layout_C) &&
       (element_accumulator == rhs.element_accumulator) &&
-      (element_compute == rhs.element_compute);
+      (element_compute == rhs.element_compute) &&
+      (epilogue_math_op == rhs.epilogue_math_op);
   }
 
   inline 
@@ -289,6 +299,7 @@ std::ostream& operator<< (std::ostream& out, const cutlass::library::ConvFunctio
       << "layout_C: " << to_string(key.layout_C) << std::endl
       << "element_accumulator: " << to_string(key.element_accumulator) << std::endl
       << "element_compute: " << to_string(key.element_compute) << std::endl
+      << "epilogue_math_op: " << to_string(key.epilogue_math_op) << std::endl
       << "}";
   
   return out;
@@ -317,7 +328,8 @@ struct ConvFunctionalKeyHasher {
       rotl(hash(int(key.element_C)), 7) ^
       rotl(hash(int(key.layout_C)), 8) ^
       rotl(hash(int(key.element_accumulator)), 9) ^
-      rotl(hash(int(key.element_compute)), 10);
+      rotl(hash(int(key.element_compute)), 10) ^
+      rotl(hash(int(key.epilogue_math_op)), 11);
   }
 };
 /////////////////////////////////////////////////////////////////////////////////////////////////

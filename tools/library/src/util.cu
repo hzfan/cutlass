@@ -784,6 +784,38 @@ ConvKind from_string<ConvKind>(std::string const &str) {
 
   return ConvKind::kInvalid;
 }
+
+static struct {
+  char const *text;
+  char const *pretty;
+  EpilogueKind enumerant;
+}
+EpilogueKind_enumerants[] = {
+  {"unknown", "<unkown>", EpilogueKind::kUnknown},
+  {"conversion", "<conversion>", EpilogueKind::kConversion},
+  {"linear", "<linear>", EpilogueKind::kLinearCombination},
+  {"clamp", "<clamp>", EpilogueKind::kLinearCombinationClamp},
+  {"planarcomplex", "<planarcomplex>", EpilogueKind::kLinearCombinationPlanarComplex},
+  {"relu", "<relu>", EpilogueKind::kLinearCombinationRelu},
+  {"sigmoid", "<sigmoid>", EpilogueKind::kLinearCombinationSigmoid},
+  {"gelu", "<gelu>", EpilogueKind::kLinearCombinationGELU},
+};
+
+/// Converts a EpilogueKind enumerant to a string
+char const *to_string(EpilogueKind type, bool pretty) {
+  for (auto const & possible : EpilogueKind_enumerants) {
+    if (type == possible.enumerant) {
+      if (pretty) {
+        return possible.pretty;
+      }
+      else {
+        return possible.text;
+      }
+    }
+  }
+
+  return pretty ? "Invalid" : "invalid";
+}
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 /// Lexical cast a string to a byte array. Returns true if cast is successful or false if invalid.

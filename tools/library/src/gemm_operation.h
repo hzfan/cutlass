@@ -27,6 +27,8 @@
 */
 
 #pragma once
+#include <iostream>
+
 #include "cutlass/cutlass.h"
 
 #include "cutlass/gemm/device/gemm.h"
@@ -60,6 +62,7 @@ public:
   using LayoutC = typename Operator::LayoutC;
   using ElementAccumulator = typename Operator::ElementAccumulator;
   using ElementCompute = typename Operator::EpilogueOutputOp::ElementCompute;
+  using EpilogueOutputOp = typename Operator::EpilogueOutputOp;
 
   using OperatorArguments = typename Operator::Arguments;
 
@@ -118,6 +121,7 @@ public:
     description_.split_k_mode = SplitKMode::kNone;
     description_.transform_A = ComplexTransformMap<Operator::kTransformA>::kId;
     description_.transform_B = ComplexTransformMap<Operator::kTransformB>::kId;
+    description_.epilogue_math_op = EpilogueOpMap<EpilogueOutputOp>::kId;
   }
   
   /// Returns the description of the GEMM operation
@@ -305,7 +309,7 @@ public:
   }
 
   void print_operator_args(OperatorArguments &operator_args) const {
-#if 0
+// #if 0
     std::cout << "GemmOperation::OperatorArguments" << std::endl;
     std::cout << "    problem_size: " << operator_args.problem_size.m() << ", "<< operator_args.problem_size.n() << "," <<  operator_args.problem_size.k() << std::endl;
     std::cout << "    alpha:      " << operator_args.epilogue.alpha << std::endl;
@@ -318,7 +322,7 @@ public:
     std::cout << "  ref_B.stride: " << operator_args.ref_B.stride(0) << std::endl;
     std::cout << "  ref_C.data(): " << operator_args.ref_C.data() << std::endl;
     std::cout << "  ref_C.stride: " << operator_args.ref_C.stride(0) << std::endl;
-#endif
+// #endif
   }
 };
 
@@ -683,7 +687,8 @@ public:
     Operator *op = new (host_workspace) Operator;
 
     status = op->initialize(args, device_workspace, stream);
-    
+    // std::cout << "initialize library::GemmUniversalOperation" << std::endl;
+    // print_operator_args(args);
     return status;
   }
 
@@ -707,14 +712,31 @@ public:
     Operator *op = static_cast<Operator *>(host_workspace);
     
     status = op->update(args, device_workspace);
-
+    // std::cout << "run library::GemmUniversalOperation" << std::endl;
+    // print_operator_args(args);
     if (status != Status::kSuccess) {
       return status;
     }
     
     status = op->run(stream);
-    
     return status;
+  }
+
+  void print_operator_args(OperatorArguments &operator_args) const {
+    std::cout << "GemmOperation::OperatorArguments" << std::endl;
+    std::cout << "    problem_size: " << operator_args.problem_size.m() << ", "<< operator_args.problem_size.n() << "," <<  operator_args.problem_size.k() << std::endl;
+    std::cout << "    alpha:      " << operator_args.epilogue.alpha << std::endl;
+    std::cout << "    alpha_ptr:  " << operator_args.epilogue.alpha_ptr << std::endl;
+    std::cout << "    beta:       " << operator_args.epilogue.beta << std::endl;
+    std::cout << "    beta_ptr:   " << operator_args.epilogue.beta_ptr << std::endl;
+    std::cout << "    ptrA: " << operator_args.ptr_A << std::endl;
+    std::cout << "    lda: " << operator_args.lda << std::endl;
+    std::cout << "    ptrB: " << operator_args.ptr_B << std::endl;
+    std::cout << "    ldb: " << operator_args.ldb << std::endl;
+    std::cout << "    ptrC: " << operator_args.ptr_C << std::endl;
+    std::cout << "    ldc: " << operator_args.ldc << std::endl;
+    std::cout << "    ptrD: " << operator_args.ptr_D << std::endl;
+    std::cout << "    ldd: " << operator_args.ldd << std::endl;
   }
 };
 

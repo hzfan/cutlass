@@ -60,7 +60,8 @@ void OperationTable::append(Manifest const &manifest) {
         gemm_desc.B.element,
         gemm_desc.B.layout,
         gemm_desc.transform_B,
-        gemm_desc.C.element
+        gemm_desc.C.element,
+        gemm_desc.epilogue_math_op
       );
 
       Operation const *op = operation.get();
@@ -90,7 +91,8 @@ void OperationTable::append(Manifest const &manifest) {
         conv_desc.C.element,
         conv_desc.C.layout,
         conv_desc.tile_description.math_instruction.element_accumulator, 
-        conv_desc.element_epilogue
+        conv_desc.element_epilogue,
+        conv_desc.epilogue_math_op
       );
 
       Operation const *op = operation.get();

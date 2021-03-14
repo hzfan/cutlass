@@ -22,17 +22,17 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  **************************************************************************************************/
-/*! 
+/*!
   \file
 
   \brief CUTLASS Library is an object-oriented approach to managing operations implemented by CUTLASS.
 
   Generally,
-    
+
     description   - compile-time constant parameters used to instantiate an operation
 
-    configuration - runtime parameters with computationally expensive initialization 
-    
+    configuration - runtime parameters with computationally expensive initialization
+
     arguments     - runtime parameters that may be passed to an initialized operation with low
                     computational overhead
 */
@@ -89,7 +89,7 @@ enum class LayoutTypeID {
   kTensorC64RSK64,
   kInvalid
 };
-  
+
 /// Numeric data type
 enum class NumericTypeID {
   kUnknown,
@@ -108,7 +108,7 @@ enum class NumericTypeID {
   kS32,
   kS64,
   kF16,
-  kBF16, 
+  kBF16,
   kTF32,
   kF32,
   kF64,
@@ -146,7 +146,7 @@ enum class Provider {
   kReferenceHost,
   kReferenceDevice,
   kCUBLAS,
-  kCUDNN,               
+  kCUDNN,
   kInvalid
 };
 
@@ -155,8 +155,8 @@ enum class Provider {
 /// Enumeration indicating the kind of operation
 enum class OperationKind {
   kGemm,
-  kConv2d,              
-  kConv3d,             
+  kConv2d,
+  kConv3d,
   kEqGemm,
   kSparseGemm,
   kReduction,
@@ -247,6 +247,7 @@ enum class EpilogueKind {
   kLinearCombinationPlanarComplex,
   kLinearCombinationRelu,
   kLinearCombinationSigmoid,
+  kLinearCombinationGELU,
   kInvalid
 };
 
@@ -276,8 +277,8 @@ struct MathInstructionDescription {
     OpcodeClassID opcode_class = OpcodeClassID::kInvalid,
     MathOperationID math_operation = MathOperationID::kMultiplyAdd
   ):
-    instruction_shape(instruction_shape), 
-    element_accumulator(element_accumulator), 
+    instruction_shape(instruction_shape),
+    element_accumulator(element_accumulator),
     opcode_class(opcode_class),
     math_operation(math_operation) {}
 
@@ -332,8 +333,8 @@ struct TileDescription {
     int minimum_compute_capability = 0,
     int maximum_compute_capability = 0
   ):
-    threadblock_shape(threadblock_shape), 
-    threadblock_stages(threadblock_stages), 
+    threadblock_shape(threadblock_shape),
+    threadblock_stages(threadblock_stages),
     warp_count(warp_count),
     math_instruction(math_instruction),
     minimum_compute_capability(minimum_compute_capability),
@@ -379,7 +380,7 @@ struct OperationDescription {
   OperationDescription(
     char const * name = "unknown",
     Provider Provider = Provider::kInvalid,
-    OperationKind kind = OperationKind::kInvalid, 
+    OperationKind kind = OperationKind::kInvalid,
     TileDescription const & tile_description = TileDescription()
   ):
     name(name), kind(kind), tile_description(tile_description) { }
@@ -402,7 +403,7 @@ struct TensorDescription {
 
   /// log2() of the maximum value each relevant stride may have
   int log_stride_range;
-  
+
   //
   // Methods
   //
@@ -414,10 +415,10 @@ struct TensorDescription {
     int log_extent_range = 24,
     int log_stride_range = 24
   ):
-    element(element), 
-    layout(layout), 
-    alignment(alignment), 
-    log_extent_range(log_extent_range), 
+    element(element),
+    layout(layout),
+    alignment(alignment),
+    log_extent_range(log_extent_range),
     log_stride_range(log_stride_range)  { }
 };
 
@@ -428,7 +429,7 @@ struct GemmDescription : public OperationDescription {
 
   /// Indicates the kind of GEMM performed
   GemmKind gemm_kind;
-  
+
   /// Describes the A operand
   TensorDescription A;
 
@@ -453,6 +454,9 @@ struct GemmDescription : public OperationDescription {
   /// Transformation on B operand
   ComplexTransform transform_B;
 
+  // Describes epilogue kind
+  EpilogueKind epilogue_math_op{EpilogueKind::kLinearCombination};
+
   //
   // Methods
   //
@@ -465,7 +469,8 @@ struct GemmDescription : public OperationDescription {
     NumericTypeID element_epilogue = NumericTypeID::kInvalid,
     SplitKMode split_k_mode = SplitKMode::kNone,
     ComplexTransform transform_A = ComplexTransform::kNone,
-    ComplexTransform transform_B = ComplexTransform::kNone
+    ComplexTransform transform_B = ComplexTransform::kNone,
+    EpilogueKind epilogue_math_op = EpilogueKind::kLinearCombination
   ):
     gemm_kind(gemm_kind),
     A(A),
@@ -474,7 +479,8 @@ struct GemmDescription : public OperationDescription {
     element_epilogue(element_epilogue),
     split_k_mode(split_k_mode),
     transform_A(transform_A),
-    transform_B(transform_B) {} 
+    transform_B(transform_B),
+    epilogue_math_op(epilogue_math_op) {}
 };
 
 /////////////////////////////////////////////////////////////////////////////////////////////////
@@ -517,7 +523,7 @@ struct ReductionDescription : public OperationDescription {
 struct ConvDescription : public OperationDescription {
   /// Describes the convolution dimension support (2D or 3D)
   int conv_dim;
-  
+
   /// Describes the kind of convolution
   ConvKind conv_kind;
 
@@ -535,6 +541,9 @@ struct ConvDescription : public OperationDescription {
 
   /// Describes the data type of the scalars passed to the epilogue
   NumericTypeID element_epilogue;
+
+  // Describes epilogue kind
+  EpilogueKind epilogue_math_op{EpilogueKind::kLinearCombination};
 
   //
   // Methods
@@ -582,25 +591,25 @@ public:
   virtual OperationDescription const & description() const = 0;
 
   virtual Status can_implement(
-    void const *configuration, 
+    void const *configuration,
     void const *arguments) const = 0;
-  
+
   virtual uint64_t get_host_workspace_size(
     void const *configuration) const = 0;
-  
+
   virtual uint64_t get_device_workspace_size(
     void const *configuration) const = 0;
-  
+
   virtual Status initialize(
-    void const *configuration, 
-    void *host_workspace, 
-    void *device_workspace = nullptr, 
+    void const *configuration,
+    void *host_workspace,
+    void *device_workspace = nullptr,
     cudaStream_t stream = nullptr) const = 0;
 
   virtual Status run(
     void const *arguments,
-    void *host_workspace, 
-    void *device_workspace = nullptr, 
+    void *host_workspace,
+    void *device_workspace = nullptr,
     cudaStream_t stream = nullptr) const = 0;
 
 };
@@ -711,7 +720,7 @@ using GemmBatchedArguments = GemmArguments;
 struct GemmArrayConfiguration {
 
   gemm::GemmCoord problem_size;
-  
+
   /// Leading dimension of A matrix
   int64_t lda;
 
@@ -735,7 +744,7 @@ struct GemmArrayArguments {
   void * const *D;
   void const *alpha;
   void const *beta;
-  ScalarPointerMode pointer_mode;  
+  ScalarPointerMode pointer_mode;
 };
 
 /////////////////////////////////////////////////////////////////////////////////////////////////
@@ -926,8 +935,8 @@ struct SparseGemmArguments {
 struct Conv2dConfiguration {
 
   conv::SplitKMode split_k_mode;
-  
-  /// Conv2d problem size 
+
+  /// Conv2d problem size
   //  contains strictly conv2d size (N,H,W,C,K,R,S,P,Q,padding,stride,dilation,mode)
   //  also includes (split_k_slices, groups)
   conv::Conv2dProblemSize problem_size;
@@ -950,8 +959,8 @@ struct Conv2dConfiguration {
 struct Conv3dConfiguration {
 
   conv::SplitKMode split_k_mode;
-  
-  /// Conv2d problem size 
+
+  /// Conv2d problem size
   //  contains strictly conv2d size (N,D,H,W,C,K,T,R,S,Z,P,Q,padding,stride,dilation,mode)
   //  also includes (split_k_slices, groups)
   conv::Conv3dProblemSize problem_size;
@@ -969,7 +978,7 @@ struct Conv3dConfiguration {
   layout::TensorNDHWC layout_output;
 
   //
-  // Methods 
+  // Methods
   //
 
   // Mapping functions (A,B,C -> activation,filter,output)
@@ -1048,7 +1057,7 @@ struct ReductionConfiguration {
   int64_t partition_stride;
 
   /// leading dimension of 'w'orksace operand
-  int64_t ldw; 
+  int64_t ldw;
 
   /// leading dimension of 's'ource operand
   int64_t lds;

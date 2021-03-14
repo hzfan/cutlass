@@ -89,7 +89,7 @@ class GemmOperation:
         self.tile_description.math_instruction.element_a != self.tile_description.math_instruction.element_accumulator:
         intermediate_type = DataTypeNames[self.tile_description.math_instruction.element_a]
 
-    return "%s%s%s%s" % (self.short_math_name(), inst_shape, intermediate_type, GemmKindNames[self.gemm_kind])
+    return "%s%s%s%s%s" % (self.short_math_name(), inst_shape, intermediate_type, GemmKindNames[self.gemm_kind], EpilogueFunctorNames[self.epilogue_functor])
 
   #
   def extended_name(self):

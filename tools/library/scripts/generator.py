@@ -285,10 +285,14 @@ def GenerateSM50_Simt(manifest, args):
     
     CreateGemmOperator(manifest, layouts, tile_descriptions, \
       data_type, alignment_constraints)
-
+    CreateGemmOperator(manifest, layouts, tile_descriptions, \
+      data_type, alignment_constraints, epilogue_functor=EpilogueFunctor.LinearCombinationRelu)
+    CreateGemmOperator(manifest, layouts, tile_descriptions, \
+      data_type, alignment_constraints, epilogue_functor=EpilogueFunctor.LinearCombinationGELU)
     if math_inst.element_a == DataType.f32:
       conv_layout = (LayoutType.TensorNHWC, LayoutType.TensorNHWC, LayoutType.TensorNHWC)
       CreateConv2dOperator(manifest, conv_layout, tile_descriptions, data_type, 1)
+      CreateConv2dOperator(manifest, conv_layout, tile_descriptions, data_type, 1, epilogue_functor=EpilogueFunctor.LinearCombinationRelu)
 #
 
 #
@@ -491,6 +495,14 @@ def GenerateSM70_TensorOp_884(manifest, args):
       TileDescription([ 64, 128, 32], 2, [2, 2, 1], math_inst, min_cc, max_cc),
       TileDescription([128,  64, 32], 2, [2, 2, 1], math_inst, min_cc, max_cc),
       TileDescription([ 64,  64, 32], 2, [2, 2, 1], math_inst, min_cc, max_cc),
+    #   TileDescription([128, 128, 32], 2, [1, 2, 2], math_inst, min_cc, max_cc),
+    #   TileDescription([ 64, 128, 32], 2, [1, 2, 2], math_inst, min_cc, max_cc),
+    #   TileDescription([128,  64, 32], 2, [1, 2, 2], math_inst, min_cc, max_cc),
+    #   TileDescription([ 64,  64, 32], 2, [1, 2, 2], math_inst, min_cc, max_cc),
+    #   TileDescription([128, 128, 32], 2, [2, 1, 2], math_inst, min_cc, max_cc),
+    #   TileDescription([ 64, 128, 32], 2, [2, 1, 2], math_inst, min_cc, max_cc),
+    #   TileDescription([128,  64, 32], 2, [2, 1, 2], math_inst, min_cc, max_cc),
+    #   TileDescription([ 64,  64, 32], 2, [2, 1, 2], math_inst, min_cc, max_cc),
     ]
 
     data_type = [
@@ -701,6 +713,11 @@ def GenerateSM75_TensorOp_1688(manifest, args):
       TileDescription([ 64, 128, 32], 2, [2, 2, 1], math_inst, min_cc, max_cc),
       TileDescription([128,  64, 32], 2, [2, 2, 1], math_inst, min_cc, max_cc),
       TileDescription([ 64,  64, 32], 2, [2, 2, 1], math_inst, min_cc, max_cc),
+      # k-warp > 1
+      TileDescription([128, 128, 64], 2, [1, 2, 2], math_inst, min_cc, max_cc),
+      TileDescription([ 64, 128, 64], 2, [1, 2, 2], math_inst, min_cc, max_cc),
+      TileDescription([128, 128, 64], 2, [2, 1, 2], math_inst, min_cc, max_cc),
+      TileDescription([ 64, 128, 64], 2, [2, 1, 2], math_inst, min_cc, max_cc),
     ]
 
     data_type = [
@@ -2311,12 +2328,17 @@ def GenerateSM80_Simt_f32(manifest, args):
       math_inst.element_accumulator,
       math_inst.element_accumulator,
     ]
-    
+
     CreateGemmOperator(manifest, layouts, tile_descriptions, \
       data_type, alignment_constraints)
+    CreateGemmOperator(manifest, layouts, tile_descriptions, \
+      data_type, alignment_constraints, epilogue_functor=EpilogueFunctor.LinearCombinationRelu)
+    CreateGemmOperator(manifest, layouts, tile_descriptions, \
+      data_type, alignment_constraints, epilogue_functor=EpilogueFunctor.LinearCombinationGELU)
 
     conv_layout = (LayoutType.TensorNHWC, LayoutType.TensorNHWC, LayoutType.TensorNHWC)
     CreateConv2dOperator(manifest, conv_layout, tile_descriptions, data_type, 1)
+    CreateConv2dOperator(manifest, conv_layout, tile_descriptions, data_type, 1, epilogue_functor=EpilogueFunctor.LinearCombinationRelu)
 #
 
 
